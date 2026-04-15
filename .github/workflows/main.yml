@@ -10,16 +10,12 @@ jobs:
     steps:
       - name: Trigger Crypto Scan
         run: |
-          RESP=$(curl -s -X POST $VAYUNX_URL/connectors/scan \
+          RESP=$(curl -s -X POST "$VAYUNX_URL/cicd/scan" \
             -H "Authorization: Bearer ${{ secrets.VAYUNX_TOKEN }}" \
             -H "Content-Type: application/json" \
-            -d '{
-              "connector_id": 5,
-              "repository_id": "${{ github.repository }}",
-              "artifact_id": "${{ github.repository }}",
-              "scan_options": {"scan_type": "repository"}
-            }')
-          echo "JOB_ID=$(echo $RESP | jq -r '.cbom_job_id')" >> $GITHUB_ENV
+            -d '{"repository_id": "${{ github.repository }}"}')
+          echo "RESP: $RESP"
+          echo "JOB_ID=$(echo $RESP | jq -r '.job_id')" >> $GITHUB_ENV
 
       - name: Poll for Results
         run: |
@@ -41,3 +37,6 @@ jobs:
             echo "::error::Critical crypto issues found!"
             exit 1
           fi
+
+
+    vxci_zIA_Wge_oNyWv5DJcpbxqlSqdbls5mgcwvM9XGpvW9756A6j5acP2Pg40vt27MF1

@@ -1,0 +1,43 @@
+name: VayunX Crypto Scan
+on: [push, pull_request]
+
+env:
+  VAYUNX_URL: https://test.vayunx.com/api/v1
+
+jobs:
+  crypto-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Crypto Scan
+        run: |
+          RESP=$(curl -s -X POST $VAYUNX_URL/connectors/scan \
+            -H "Authorization: Bearer ${{ secrets.VAYUNX_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "connector_id": 5,
+              "repository_id": "${{ github.repository }}",
+              "artifact_id": "${{ github.repository }}",
+              "scan_options": {"scan_type": "repository"}
+            }')
+          echo "JOB_ID=$(echo $RESP | jq -r '.cbom_job_id')" >> $GITHUB_ENV
+
+      - name: Poll for Results
+        run: |
+          while true; do
+            V=$(curl -s "$VAYUNX_URL/cicd/scan/$JOB_ID/verdict" \
+              -H "Authorization: Bearer ${{ secrets.VAYUNX_TOKEN }}")
+            STATUS=$(echo $V | jq -r '.status')
+            [ "$STATUS" = "completed" ] || [ "$STATUS" = "failed" ] && break
+            echo "Scanning... $(echo $V | jq -r '.progress_percentage')%"
+            sleep 10
+          done
+          echo "FINDINGS=$(echo $V | jq -c '.findings_summary')" >> $GITHUB_ENV
+          echo "CRITICAL=$(echo $V | jq '.findings_summary.critical // 0')" >> $GITHUB_ENV
+
+      - name: Evaluate Findings
+        run: |
+          echo "Findings: $FINDINGS"
+          if [ "$CRITICAL" -gt 0 ]; then
+            echo "::error::Critical crypto issues found!"
+            exit 1
+          fi

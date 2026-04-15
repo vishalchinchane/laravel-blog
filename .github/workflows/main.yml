@@ -29,10 +29,12 @@ jobs:
           done
           echo "FINDINGS=$(echo $V | jq -c '.findings_summary')" >> $GITHUB_ENV
           echo "CRITICAL=$(echo $V | jq '.findings_summary.critical // 0')" >> $GITHUB_ENV
+          echo "ALGORITHMS=$(echo $V | jq -c '.detected_algorithms')" >> $GITHUB_ENV
 
       - name: Evaluate Findings
         run: |
           echo "Findings: $FINDINGS"
+          echo "Algorithms: $ALGORITHMS"
           if [ "$CRITICAL" -gt 0 ]; then
             echo "::error::Critical crypto issues found!"
             exit 1

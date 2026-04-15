@@ -37,6 +37,3 @@ jobs:
             echo "::error::Critical crypto issues found!"
             exit 1
           fi
-
-
-    vxci_zIA_Wge_oNyWv5DJcpbxqlSqdbls5mgcwvM9XGpvW9756A6j5acP2Pg40vt27MF1
